@@ -3,18 +3,15 @@ from rest_framework import serializers
 from .models import PendingMeeting, Participant, FinalizedMeeting
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema_field
-from Account.models import User
+from Account.serializers import UserSerializer
 
 
 class ParticipantSerializer(serializers.ModelSerializer):
-    user_full_name = serializers.SerializerMethodField()
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = Participant
-        fields = ('user_full_name', 'response')
-
-    def get_user_full_name(self, obj):
-        return f"{obj.user.first_name} {obj.user.last_name}"
+        fields = ('user', 'response')
 
 
 class PendingMeetingSerializer(serializers.ModelSerializer):
@@ -49,13 +46,8 @@ class PendingMeetingDetailSerializer(serializers.ModelSerializer):
 
 
 class FinalizedMeetingSerializer(serializers.ModelSerializer):
-    participant_full_name = serializers.SerializerMethodField()
+    participant = UserSerializer(read_only=True)
 
     class Meta:
         model = FinalizedMeeting
-        fields = ('title', 'time', 'time_limit', 'participant_full_name')
-
-    @extend_schema_field(OpenApiTypes.STR)
-    def get_participant_full_name(self, obj):
-        # Assuming the User model has first_name and last_name fields
-        return f"{obj.participant.first_name} {obj.participant.last_name}"
+        fields = ('title', 'time', 'time_limit', 'participant')
