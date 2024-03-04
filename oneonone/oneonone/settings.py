@@ -38,7 +38,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'drf_spectacular'
+    'drf_spectacular',
+    'Account',
+    'Meeting',
 ]
 
 MIDDLEWARE = [
@@ -55,6 +57,11 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'OneOnOne API',
+    'DESCRIPTION': 'API documentation for the OneOnOne app',
+    'VERSION': '1.0.0',
+}
 
 ROOT_URLCONF = 'oneonone.urls'
 

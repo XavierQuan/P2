@@ -1,5 +1,5 @@
 from django.db import models
-from ..Account.models import User
+from Account.models import User
 
 
 class PendingMeeting(models.Model):
@@ -29,7 +29,7 @@ class FinalizedMeeting(models.Model):
     title = models.CharField(max_length=255)
     time = models.DateTimeField()
     time_limit = models.DateTimeField()
-    participants = models.ManyToManyField(User)
+    participant = models.ForeignKey(User, on_delete=models.CASCADE)
 
 
 class SuggestedSchedule(models.Model):
