@@ -13,7 +13,7 @@ class PendingMeetingList(APIView):
 
     @extend_schema(
         summary='List Pending Meetings',
-        description='Retrieve a list of all pending meetings filtered by the owner. Includes a boolean indicating whether each meeting has passed its deadline.',
+        description='Retrieve a list of all pending meetings filtered by the owner.',
         responses={200: PendingMeetingSerializer(many=True)},
     )
     def get(self, request, format=None):
@@ -27,7 +27,7 @@ class PendingMeetingDetail(APIView):
 
     @extend_schema(
         summary='Pending Meeting Details',
-        description='Retrieve detailed information about a specific pending meeting, including all participants.',
+        description='Retrieve detailed information about a specific pending meeting.',
         responses={200: PendingMeetingDetailSerializer},
     )
     def get(self, request, pk, format=None):
@@ -36,15 +36,33 @@ class PendingMeetingDetail(APIView):
         return Response(serializer.data)
 
 
-class ScheduledMeetingList(APIView):
+class FinalizedMeetingList(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        summary='List Scheduled Meetings',
-        description='Retrieve a list of finalized (scheduled) meetings filtered by the meeting owner. Includes meeting details and participants.',
+        summary='List Finalized Meetings',
+        description='Retrieve a list of finalized (scheduled) meetings filtered by the meeting owner.',
         responses={200: FinalizedMeetingSerializer(many=True)},
     )
     def get(self, request, format=None):
         meetings = FinalizedMeeting.objects.filter(meeting__owner=request.user)
         serializer = FinalizedMeetingSerializer(meetings, many=True)
         return Response(serializer.data)
+
+
+class FinalizedMeetingDetail(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='Finalized Meeting Details',
+        description='Retrieve detailed information about a specific finalized (scheduled) meeting.',
+        responses={200: FinalizedMeetingSerializer},
+    )
+    def get(self, request, pk, format=None):
+        try:
+            meeting = FinalizedMeeting.objects.get(pk=pk, meeting__owner=request.user)
+            serializer = FinalizedMeetingSerializer(meeting)
+            return Response(serializer.data)
+        except FinalizedMeeting.DoesNotExist:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+
