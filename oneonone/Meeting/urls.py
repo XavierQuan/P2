@@ -5,6 +5,7 @@ from .views import (PendingMeetingList,
                     FinalizedMeetingDetail,
                     PendingMeetingCreateView,
                     TimeSlotCreateView,
+                    TimeSlotsListView,
                     ParticipantCreateView,)
 
 urlpatterns = [
@@ -15,4 +16,5 @@ urlpatterns = [
     path('pending-meetings/create/', PendingMeetingCreateView.as_view(), name='create-pending-meeting'),
     path('time-slots/create/', TimeSlotCreateView.as_view(), name='create-time-slot'),
     path('participants/create/', ParticipantCreateView.as_view(), name='create-participant'),
+    path('time-slots/', TimeSlotsListView.as_view(), name='time-slots'),
 ]

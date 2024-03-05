@@ -2,15 +2,17 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from django.utils import timezone
-from .models import PendingMeeting, FinalizedMeeting
+from .models import (PendingMeeting,
+                     FinalizedMeeting,
+                     TimeSlot)
 from .serializers import (PendingMeetingSerializer,
                           PendingMeetingDetailSerializer,
                           FinalizedMeetingSerializer,
                           PendingMeetingCreateSerializer,
                           TimeSlotCreateSerializer,
+                          TimeSlotSerializer,
                           ParticipantCreateSerializer,)
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 
 
 class PendingMeetingList(APIView):
@@ -56,6 +58,30 @@ class PendingMeetingCreateView(APIView):
             meeting = serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TimeSlotsListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='List Time Slots',
+        description='Retrieve a list of time slots filtered by the given meeting ID and the given user ID.',
+        parameters=[
+            OpenApiParameter(name='meeting_id', description='The ID of the meeting to filter time slots by.', required=True, type=OpenApiTypes.INT),
+            OpenApiParameter(name='user_id', description='The ID of the user to filter time slots by.', required=True, type=OpenApiTypes.INT),
+        ],
+        responses={200: TimeSlotSerializer(many=True)},
+    )
+    def get(self, request, format=None):
+        meeting_id = request.query_params.get('meeting_id')
+        user_id = request.query_params.get('user_id')
+
+        if not meeting_id or not user_id:
+            return Response({"error": "Meeting ID and User ID must be provided as query parameters."}, status=400)
+
+        time_slots = TimeSlot.objects.filter(meeting__id=meeting_id, user__id=user_id)
+        serializer = TimeSlotSerializer(time_slots, many=True)
+        return Response(serializer.data)
 
 
 class TimeSlotCreateView(APIView):

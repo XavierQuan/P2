@@ -75,6 +75,12 @@ class FinalizedMeetingSerializer(serializers.ModelSerializer):
         fields = ('title', 'time', 'time_limit', 'participant')
 
 
+class TimeSlotSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TimeSlot
+        fields = ['meeting', 'start_time', 'priority', 'user']
+
+
 class TimeSlotCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = TimeSlot
