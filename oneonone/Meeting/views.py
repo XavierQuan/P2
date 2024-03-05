@@ -4,14 +4,16 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .models import (PendingMeeting,
                      FinalizedMeeting,
-                     TimeSlot)
+                     TimeSlot,
+                     Participant,)
 from .serializers import (PendingMeetingSerializer,
                           PendingMeetingDetailSerializer,
                           FinalizedMeetingSerializer,
                           PendingMeetingCreateSerializer,
                           TimeSlotCreateSerializer,
                           TimeSlotSerializer,
-                          ParticipantCreateSerializer,)
+                          ParticipantCreateSerializer,
+                          PendingMeetingUpdateSerializer,)
 from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 
 
@@ -60,6 +62,30 @@ class PendingMeetingCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class PendingMeetingUpdateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='Update Pending Meeting',
+        description='Updates specified details (title, message, deadline, time limit) of a pending meeting.',
+        request=PendingMeetingUpdateSerializer,
+        responses={200: PendingMeetingDetailSerializer},
+    )
+    def put(self, request, pk, format=None):
+        try:
+            meeting = PendingMeeting.objects.get(id=pk, owner=request.user)
+            serializer = PendingMeetingUpdateSerializer(meeting, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                # Re-fetch the updated meeting to use with the detail serializer for the response
+                updated_meeting = PendingMeeting.objects.get(id=pk)
+                detail_serializer = PendingMeetingDetailSerializer(updated_meeting)
+                return Response(detail_serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except PendingMeeting.DoesNotExist:
+            return Response({'detail': 'Pending Meeting not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
 class TimeSlotsListView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -101,6 +127,22 @@ class TimeSlotCreateView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class TimeSlotDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='Delete Time Slot',
+        description='Deletes a time slot by meeting ID and participant ID.',
+    )
+    def delete(self, request, meeting_id, user_id, format=None):
+        try:
+            time_slot = TimeSlot.objects.get(meeting_id=meeting_id, user_id=user_id)
+            time_slot.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except TimeSlot.DoesNotExist:
+            return Response({'detail': 'Time Slot not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
 class ParticipantCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -116,6 +158,23 @@ class ParticipantCreateView(APIView):
             participant = serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ParticipantDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='Delete Participant',
+        description='Deletes a participant and associated time slot by meeting ID and participant ID.',
+    )
+    def delete(self, request, meeting_id, participant_id, format=None):
+        try:
+            participant = Participant.objects.get(id=participant_id, meeting_id=meeting_id, user=request.user)
+            TimeSlot.objects.filter(meeting_id=meeting_id, user=request.user).delete()
+            participant.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except Participant.DoesNotExist:
+            return Response({'detail': 'Participant not found.'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class FinalizedMeetingList(APIView):

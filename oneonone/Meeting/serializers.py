@@ -67,6 +67,12 @@ class PendingMeetingCreateSerializer(serializers.ModelSerializer):
         return PendingMeeting.objects.create(owner=user, **validated_data)
 
 
+class PendingMeetingUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PendingMeeting
+        fields = ['title', 'message', 'deadline', 'time_limit']
+
+
 class FinalizedMeetingSerializer(serializers.ModelSerializer):
     participant = UserSerializer(read_only=True)
 
