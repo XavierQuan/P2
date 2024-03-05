@@ -4,8 +4,13 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from .models import PendingMeeting, FinalizedMeeting
-from .serializers import PendingMeetingSerializer, PendingMeetingDetailSerializer, FinalizedMeetingSerializer
-from drf_spectacular.utils import extend_schema, extend_schema_field
+from .serializers import (PendingMeetingSerializer,
+                          PendingMeetingDetailSerializer,
+                          FinalizedMeetingSerializer,
+                          PendingMeetingCreateSerializer,
+                          TimeSlotCreateSerializer,
+                          ParticipantCreateSerializer,)
+from drf_spectacular.utils import extend_schema
 
 
 class PendingMeetingList(APIView):
@@ -34,6 +39,57 @@ class PendingMeetingDetail(APIView):
         meeting = PendingMeeting.objects.get(pk=pk)
         serializer = PendingMeetingDetailSerializer(meeting)
         return Response(serializer.data)
+
+
+class PendingMeetingCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='Create Pending Meeting',
+        description='Allows the creation of a new pending meeting.',
+        request=PendingMeetingCreateSerializer,
+        responses={201: PendingMeetingCreateSerializer},
+    )
+    def post(self, request, format=None):
+        serializer = PendingMeetingCreateSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            meeting = serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TimeSlotCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='Create Time Slot',
+        description='Create a new time slot for a pending meeting.',
+        request=TimeSlotCreateSerializer,
+        responses={201: TimeSlotCreateSerializer},
+    )
+    def post(self, request, format=None):
+        serializer = TimeSlotCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            time_slot = serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ParticipantCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary='Add Participant to Meeting',
+        description='Add a new participant to a pending meeting.',
+        request=ParticipantCreateSerializer,
+        responses={201: ParticipantCreateSerializer},
+    )
+    def post(self, request, format=None):
+        serializer = ParticipantCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            participant = serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class FinalizedMeetingList(APIView):
